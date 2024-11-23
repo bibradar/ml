@@ -21,8 +21,7 @@ class AccessPoint:
         return f"<AccessPoint(id={self.id}, name={self.name}, library_id={self.library_id})>"
 
 class Utilization:
-    def __init__(self, id, accesspoint_id, timestamp, user_count):
-        self.id = id
+    def __init__(self, accesspoint_id, timestamp, user_count = None):
         self.accesspoint_id = accesspoint_id
         self.timestamp = timestamp
         self.user_count = user_count
@@ -30,6 +29,14 @@ class Utilization:
     def __repr__(self):
         return f"<Utilization(id={self.id}, accesspoint_id={self.accesspoint_id}, timestamp={self.timestamp}, user_count={self.user_count})>"
 
+
+class AggregateUtilization:
+    def __init__(self, timestamp, user_count):
+        self.timestamp = timestamp
+        self.user_count = user_count
+
+    def __repr__(self):
+        return f"<AggregateUtilization(timestamp={self.timestamp}, user_count={self.user_count})>"
     
 class DatabaseConnection:
     def __init__(self):
@@ -65,10 +72,18 @@ class DatabaseConnection:
     
     def get_utilizations_by_library(self, library_id):
         cursor = self.connection.cursor()
-        cursor.execute('SELECT * FROM utilization WHERE accesspoint_id IN (SELECT id FROM accesspoint WHERE library_id = %s)', (library_id,))
+        cursor.execute("""
+                        SELECT u.timestamp, SUM(u.user_count)
+                        FROM utilization u
+                        JOIN accesspoint ON u.accesspoint_id = accesspoint.id
+                        WHERE accesspoint.library_id = %s
+                        GROUP BY u.timestamp
+                        ORDER BY u.timestamp
+                       """, (library_id,))
         utilizations = cursor.fetchall()
+        print(utilizations)
         cursor.close()
-        return [Utilization(*utilization) for utilization in utilizations]
+        return [AggregateUtilization(*utilization) for utilization in utilizations]
 
     def close(self):
         self.connection.close()
