@@ -93,6 +93,21 @@ class DatabaseConnection:
         print(utilizations)
         cursor.close()
         return [AggregateUtilization(*utilization) for utilization in utilizations]
+    
+    def get_max_count_for_library(self, library_id: int):
+        cursor = self.connection.cursor()
+        cursor.execute(
+            """
+                SELECT cast(max(percentile_cont) as integer) from user_count_stats
+                WHERE id = %s
+                group by id
+            """,
+            (library_id,),
+        )
+        utilization = cursor.fetchone()
+        cursor.close()
+        return utilization[0]
+        
 
     def get_user_count_stats_of_day(self, day: int):
         cursor = self.connection.cursor()
