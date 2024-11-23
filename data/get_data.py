@@ -17,13 +17,13 @@ def get_data_frame(library_id: int) -> pd.DataFrame:
     return data
 
 
-def get_max_user_count(aggregated_user_data: pd.DataFrame) -> int:
-    sorted_user_counts = aggregated_user_data['user_count'].sort_values(ascending=False)
-    top_5_percent_count = int(len(sorted_user_counts) * 0.05)
-    top_5_percent_values = sorted_user_counts.head(top_5_percent_count)
-    median_value = top_5_percent_values.median()
+def get_max_user_count(library_id: int) -> int:
+    db = DatabaseConnection()
+    max_count = db.get_max_count_for_library(library_id)
+    db.close()
+    return max_count
 
-    return median_value
+
 
 def predict_one_day(model, df, start_timestamp) -> list:
     """
@@ -59,8 +59,8 @@ def predict_one_day(model, df, start_timestamp) -> list:
 
     return predictions_with_timestamps
 
-def load_model_and_get_prediction(timestamp: str) -> float:
-    data = get_data_frame(1)
+def load_model_and_get_prediction(timestamp: str, library_id: int) -> float:
+    data = get_data_frame(library_id)
     pred = Predictor.deserialize(Path("./models"))
     predictions = predict_one_day(pred, data, timestamp)
     for prediction in predictions:

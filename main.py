@@ -1,7 +1,7 @@
 from dotenv import load_dotenv, dotenv_values
 
 from data.db import DatabaseConnection
-from data.get_data import get_data_frame, load_model_and_get_prediction
+from data.get_data import get_data_frame, load_model_and_get_prediction, get_max_user_count
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Dict, Any
@@ -42,16 +42,25 @@ class LibraryOccupancyPredictionOutput(BaseModel):
 def read_root():
     return {"Hello": "World"}
 
+@app.get("/max_count")
+def read_max():
+    return get_max_user_count(1)    
+
 
 @app.get("/libraries")
 def get_libraries():
     return db.get_libraries()
+    
 
 @app.get("/libraries_day_prediction", response_model=List[LibraryOccupancyPredictionOutput])
 def get_libraries_day_prediction():
+    
     libraries = db.get_libraries()
-    prediction = load_model_and_get_prediction("2024-11-23 12:00:00")
-    print(prediction)
+    current_day_timestamp = datetime.datetime.now().replace(hour=0, minute=0, second=0).strftime("%Y-%m-%d %H:%M:%S")
+    
+    for lib in libraries:
+        prediction = load_model_and_get_prediction(current_day_timestamp, lib.id)
+    
     predictions = [
         LibraryOccupancyPredictionOutput(
             library_id=library.id,
