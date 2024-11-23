@@ -8,7 +8,7 @@ from typing import List, Dict, Any
 import time
 import uvicorn
 
-load_dotenv(dotenv_path='.env')
+load_dotenv(dotenv_path=".env")
 
 db = DatabaseConnection()
 app = FastAPI()
@@ -26,9 +26,11 @@ class LibraryOccupancyPredictionOutput(BaseModel):
     occupancy: str
 
 
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
 
 @app.get("/libraries")
 def get_libraries():
@@ -51,6 +53,34 @@ def get_libraries_day_prediction():
 def predict(input_data: List[LibraryScorePredictionInput]):
     print(input_data)
 
+
+@app.get("/user_count_stats/{day}")
+def get_user_count_stats_of_day(day: int):
+    stats_by_lib = {}
+    for (
+        lib_id,
+        day,
+        hour,
+        avg_user_count,
+        max_user_count,
+    ) in db.get_user_count_stats_of_day(day):
+        if lib_id not in stats_by_lib:
+            stats_by_lib[lib_id] = []
+
+        stats_by_lib[lib_id].append(
+            {
+                "avg_user_count": avg_user_count,
+                "max_user_count": max_user_count,
+            }
+        )
+
+    return stats_by_lib
+
+
+@app.post("/predict", response_model=List[LibraryScorePredictionOutput])
+def predict(input_data: List[LibraryScorePredictionInput]):
+    print(input_data)
+
     for library in input_data:
         # 0. Time to get to library (arrival_time - now)
         time_to_library = library.arrival_time - int(time.time())
@@ -59,7 +89,7 @@ def predict(input_data: List[LibraryScorePredictionInput]):
         data = get_data_frame(library.library_id)
         # model = ...
         # prediction_user_precentage = model.predict(data, time_to_library)
-        prediction_user_percentage = 0.5 # value how many users  are predicted to be in the library at the given time
+        prediction_user_percentage = 0.5  # value how many users  are predicted to be in the library at the given time
 
         # 2. Weight the predicted user count and the distance to the library to a score
         max_time = 3600  # Get max time from data??
@@ -69,15 +99,17 @@ def predict(input_data: List[LibraryScorePredictionInput]):
         weight_user_percentage = 0.5
 
         # 3. Return the libraries sorted by the score
-        score = (weight_time * (1 - normalized_time)) + (weight_user_percentage * (1 - prediction_user_percentage))  
+        score = (weight_time * (1 - normalized_time)) + (
+            weight_user_percentage * (1 - prediction_user_percentage)
+        )
 
         prediction = LibraryScorePredictionOutput(
             library_id=library.library_id,
             score=score,
             stats={
                 "time_to_library": time_to_library,
-                "predicted_user_percentage": prediction_user_percentage
-            }
+                "predicted_user_percentage": prediction_user_percentage,
+            },
         )
         predictions.append(prediction)
 
@@ -85,7 +117,6 @@ def predict(input_data: List[LibraryScorePredictionInput]):
 
     return predictions
 
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
