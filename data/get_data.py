@@ -5,12 +5,15 @@ import pickle
 from gluonts.dataset.common import ListDataset
 from gluonts.model.predictor import Predictor
 import datetime
+import torch
 
 
 def get_data_frame(library_id: int) -> pd.DataFrame:
     db = DatabaseConnection()
     utilizations = db.get_utilizations_by_library(library_id)
-    data = pd.DataFrame([utilization.__dict__ for utilization in utilizations]) 
+    data = pd.DataFrame([utilization.__dict__ for utilization in utilizations])
+    if data.empty:
+        return
     data['timestamp'] = pd.to_datetime(data['timestamp'])
     db.close()
     data['user_count'] = data['user_count'].fillna(0)
@@ -61,7 +64,7 @@ def predict_one_day(model, df, start_timestamp) -> list:
 
 def load_model_and_get_prediction(timestamp: str, library_id: int) -> float:
     data = get_data_frame(library_id)
-    pred = Predictor.deserialize(Path("./models"))
+    pred = Predictor.deserialize(Path(f"./models/{library_id}"))
     predictions = predict_one_day(pred, data, timestamp)
     for prediction in predictions:
         print(prediction)

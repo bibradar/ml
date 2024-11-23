@@ -107,10 +107,7 @@ def predict(input_data: List[LibraryScorePredictionInput]):
 
         # 1. Get the predicted user count for the library at the given arrival time
         data = get_data_frame(library.library_id)
-        # prediction_user_precentage = model.predict(data, time_to_library)
-        prediction_user_percentage = load_model_and_get_prediction(data, library.arrival_time)
-
-        prediction_user_percentage = 0.5  # value how many users  are predicted to be in the library at the given time
+        prediction_user_percentage = load_model_and_get_prediction(data, library.library_id)
 
         # 2. Weight the predicted user count and the distance to the library to a score
         normalized_time = time_to_library / max_time
