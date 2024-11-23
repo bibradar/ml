@@ -2,9 +2,11 @@ import psycopg as pg
 import os
 
 class Library:
-    def __init__(self, id, name, location):
+    def __init__(self, id, name, bib, uni, location):
         self.id = id
         self.name = name
+        self.bib = bib
+        self.uni = uni
         self.location = location
 
     def __repr__(self):
