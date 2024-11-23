@@ -12,6 +12,7 @@ pandas = "^2.2.3"
 xgboost = "^2.1.2"
 sqlalchemy = "^2.0.36"
 psycopg = "^3.2.3"
+python-dotenv = "^1.0.1"
 
 
 [build-system]

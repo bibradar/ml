@@ -40,31 +40,32 @@ class DatabaseConnection:
             host=os.getenv('DB_HOST'),
             port=os.getenv('DB_PORT')
         )
+        print('Connected to database')
 
     def get_libraries(self):
         cursor = self.connection.cursor()
-        cursor.execute('SELECT * FROM libraries')
+        cursor.execute('SELECT * FROM library')
         libraries = cursor.fetchall()
         cursor.close()
         return [Library(*library) for library in libraries]
 
     def get_access_points(self):
         cursor = self.connection.cursor()
-        cursor.execute('SELECT * FROM access_points')
+        cursor.execute('SELECT * FROM accesspoint')
         access_points = cursor.fetchall()
         cursor.close()
         return [AccessPoint(*access_point) for access_point in access_points]
 
     def get_utilizations(self):
         cursor = self.connection.cursor()
-        cursor.execute('SELECT * FROM utilizations')
+        cursor.execute('SELECT * FROM utilization')
         utilizations = cursor.fetchall()
         cursor.close()
         return [Utilization(*utilization) for utilization in utilizations]
     
     def get_utilizations_by_library(self, library_id):
         cursor = self.connection.cursor()
-        cursor.execute('SELECT * FROM utilizations WHERE accesspoint_id IN (SELECT id FROM access_points WHERE library_id = %s)', (library_id,))
+        cursor.execute('SELECT * FROM utilization WHERE accesspoint_id IN (SELECT id FROM accesspoint WHERE library_id = %s)', (library_id,))
         utilizations = cursor.fetchall()
         cursor.close()
         return [Utilization(*utilization) for utilization in utilizations]

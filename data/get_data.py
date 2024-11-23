@@ -1,4 +1,4 @@
-from ml.data.db import DatabaseConnection
+from data.db import DatabaseConnection
 import pandas as pd
 
 
