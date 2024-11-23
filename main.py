@@ -34,7 +34,6 @@ def get_libraries():
 def predict(input_data: List[LibraryPredictionInput]):
     print(input_data)
 
-        
 
     for library in input_data:
         # 0. Time to get to library (arrival_time - now)

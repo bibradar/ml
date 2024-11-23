@@ -4,8 +4,8 @@ FROM python:3.12-slim
 # Set environment variables
 # ENV POETRY_VERSION=1.1.11
 
-# Install Poetry
-RUN pip install "poetry"
+# Install Poetry and PostgreSQL client
+RUN apt-get update && apt-get install -y postgresql-client && pip install "poetry"
 
 # Set the working directory
 WORKDIR /app
