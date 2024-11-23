@@ -61,6 +61,13 @@ class DatabaseConnection:
         utilizations = cursor.fetchall()
         cursor.close()
         return [Utilization(*utilization) for utilization in utilizations]
+    
+    def get_utilizations_by_library(self, library_id):
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT * FROM utilizations WHERE accesspoint_id IN (SELECT id FROM access_points WHERE library_id = %s)', (library_id,))
+        utilizations = cursor.fetchall()
+        cursor.close()
+        return [Utilization(*utilization) for utilization in utilizations]
 
     def close(self):
         self.connection.close()
