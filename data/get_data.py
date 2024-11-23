@@ -8,4 +8,5 @@ def get_data_frame(library_id: int) -> pd.DataFrame:
     data = pd.DataFrame([utilization.__dict__ for utilization in utilizations])
     data['timestamp'] = pd.to_datetime(data['timestamp'])
     db.close()
+    data['user_count'] = data['user_count'].fillna(0)
     return data

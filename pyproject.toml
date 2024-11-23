@@ -18,6 +18,10 @@ statsmodels = "^0.14.4"
 ipykernel = "^6.29.5"
 matplotlib = "^3.9.2"
 seaborn = "^0.13.2"
+gluonts = "^0.16.0"
+torch = "^2.5.1"
+lightning = "^2.4.0"
+psycopg-binary = "^3.2.3"
 
 
 [build-system]
