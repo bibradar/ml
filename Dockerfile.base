@@ -1,0 +1,11 @@
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y postgresql-client && pip install "poetry"
+
+WORKDIR /app
+
+COPY pyproject.toml poetry.lock ./
+
+EXPOSE 8000
+
+RUN poetry install --no-root --no-dev
