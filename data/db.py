@@ -57,6 +57,7 @@ class DatabaseConnection:
         cursor.close()
         return [Library(*library) for library in libraries]
 
+
     def get_access_points(self):
         cursor = self.connection.cursor()
         cursor.execute('SELECT * FROM accesspoint')

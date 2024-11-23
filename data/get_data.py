@@ -5,7 +5,7 @@ import pandas as pd
 def get_data_frame(library_id: int) -> pd.DataFrame:
     db = DatabaseConnection()
     utilizations = db.get_utilizations_by_library(library_id)
-    data = pd.DataFrame([utilization.__dict__ for utilization in utilizations])
+    data = pd.DataFrame([utilization.__dict__ for utilization in utilizations]) 
     data['timestamp'] = pd.to_datetime(data['timestamp'])
     db.close()
     data['user_count'] = data['user_count'].fillna(0)
@@ -19,3 +19,10 @@ def get_max_user_count(aggregated_user_data: pd.DataFrame) -> int:
     median_value = top_5_percent_values.median()
 
     return median_value
+
+def get_library_ids():
+    db = DatabaseConnection()
+    libraries = db.get_libraries()
+    library_ids = [library.id for library in libraries]
+    db.close()
+    return library_ids

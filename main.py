@@ -32,9 +32,6 @@ def get_libraries():
 
 @app.post("/predict", response_model=List[LibraryPredictionOutput])
 def predict(input_data: List[LibraryPredictionInput]):
-    print(input_data)
-
-
     for library in input_data:
         # 0. Time to get to library (arrival_time - now)
         time_to_library = library.arrival_time - int(time.time())
