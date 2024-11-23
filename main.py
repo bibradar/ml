@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv(dotenv_path=".env")
 
 db = DatabaseConnection()
-app = FastAPI(docs_url="/documentation")
+app = FastAPI()
 
 
 app.add_middleware(
@@ -26,7 +26,7 @@ app.add_middleware(
 
 class LibraryScorePredictionInput(BaseModel):
     library_id: int
-    arrival_time: str
+    arrival_time: int
 
 class LibraryScorePredictionOutput(BaseModel):
     library_id: int
@@ -97,20 +97,19 @@ def get_user_count_stats_of_day(day: int):
 def predict(input_data: List[LibraryScorePredictionInput]):
     print(input_data)
 
-    time_format = "%Y-%m-%d %H:%M:%S"
+    # time_format = "%Y-%m-%d %H:%M:%S"
 
     predictions = []
     max_time = 0
     for library in input_data:
-        timestamp = int(datetime.strptime(library.arrival_time, time_format).timestamp())
-        time_to_library = timestamp - int(time.time())
+        time_to_library = library.arrival_time - int(datetime.datetime.now().timestamp())
         if time_to_library > max_time:
             max_time = time_to_library
 
     for library in input_data:
-        timestamp = int(datetime.strptime(library.arrival_time, time_format).timestamp())
+        timestamp_now = datetime.datetime.now().timestamp()
         # 0. Time to get to library (arrival_time - now)
-        time_to_library = timestamp - int(time.time())
+        time_to_library = timestamp_now - int(time.time())
 
         # 1. Get the predicted user count for the library at the given arrival time
         data = get_data_frame(library.library_id)
