@@ -10,3 +10,12 @@ def get_data_frame(library_id: int) -> pd.DataFrame:
     db.close()
     data['user_count'] = data['user_count'].fillna(0)
     return data
+
+
+def get_max_user_count(aggregated_user_data: pd.DataFrame) -> int:
+    sorted_user_counts = aggregated_user_data['user_count'].sort_values(ascending=False)
+    top_5_percent_count = int(len(sorted_user_counts) * 0.05)
+    top_5_percent_values = sorted_user_counts.head(top_5_percent_count)
+    median_value = top_5_percent_values.median()
+
+    return median_value
