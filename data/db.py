@@ -1,7 +1,6 @@
 import psycopg as pg
 import os
 
-# Python classes
 class Library:
     def __init__(self, id, name, location):
         self.id = id
