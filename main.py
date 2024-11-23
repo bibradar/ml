@@ -22,6 +22,10 @@ class LibraryPredictionOutput(BaseModel):
     score: float
     stats: Dict[str, Any]
 
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
 @app.get("/libraries")
 def get_libraries():
     return db.get_libraries()
