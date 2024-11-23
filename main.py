@@ -8,11 +8,21 @@ from typing import List, Dict, Any
 import time
 import uvicorn
 import datetime
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv(dotenv_path=".env")
 
 db = DatabaseConnection()
 app = FastAPI(docs_url="/documentation")
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class LibraryScorePredictionInput(BaseModel):
     library_id: int
