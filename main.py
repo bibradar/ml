@@ -1,14 +1,15 @@
 from dotenv import load_dotenv, dotenv_values
 
 from data.db import DatabaseConnection
-from data.get_data import get_data_frame, load_model_and_get_prediction, get_max_user_count
-from fastapi import FastAPI
+from data.get_data import get_data_frame, get_model, get_max_user_count, predict_one_day, load_model_and_get_prediction
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any
 import time
 import uvicorn
 import datetime
 from fastapi.middleware.cors import CORSMiddleware
+import pandas as pd
 
 load_dotenv(dotenv_path=".env")
 
@@ -34,7 +35,7 @@ class LibraryScorePredictionOutput(BaseModel):
 
 class LibraryOccupancyPredictionOutput(BaseModel):
     library_id: int
-    occupancy: str
+    occupancy: list[int]
 
 
 
@@ -56,15 +57,17 @@ def get_libraries():
 def get_libraries_day_prediction():
     
     libraries = db.get_libraries()
-    current_day_timestamp = datetime.datetime.now().replace(hour=0, minute=0, second=0).strftime("%Y-%m-%d %H:%M:%S")
-        
-    predictions = [
+    current_day_timestamp = int(datetime.datetime.now().replace(hour=0, minute=0, second=0).timestamp())
+
+    preds = map(lambda l: (l['id'], load_model_and_get_prediction(current_day_timestamp, l['id'])), libraries)
+
+    output =  [
         LibraryOccupancyPredictionOutput(
-            library_id=library.id,
-            occupancy=str(load_model_and_get_prediction(current_day_timestamp, library.id))
-        ) for library in libraries
+            library_id=library_id,
+            occupancy=[int(e['predicted_user_count']) for e in occ]
+        ) for library_id, occ in preds
     ]
-    return predictions
+    return output
 
 
 @app.get("/user_count_stats/{day}")
@@ -98,17 +101,22 @@ def predict(input_data: List[LibraryScorePredictionInput]):
     max_time = 0
     for library in input_data:
         time_to_library = library.arrival_time - int(datetime.datetime.now().timestamp())
+
+        if time_to_library < 0:
+            raise HTTPException(status_code=400, detail="arrival_time is in the past")
         if time_to_library > max_time:
             max_time = time_to_library
 
     for library in input_data:
         # 0. Time to get to library (arrival_time - now)
-        time_to_library = library.arrival_time - int(time.time())
+        time_to_library = library.arrival_time - int(datetime.datetime.now().timestamp())
+        
+        predictions = load_model_and_get_prediction(library.arrival_time, library.library_id)
 
-        # 1. Get the predicted user count for the library at the given arrival time
-        data = get_data_frame(library.library_id)
-        prediction_user_percentage = load_model_and_get_prediction(data, library.library_id)
-
+        timestamp = pd.Timestamp(library.arrival_time, unit='s', tz='Europe/Berlin')
+        pred = next(filter(lambda p: p['timestamp'] == timestamp, predictions), None)
+        if pred == None:
+    
         # 2. Weight the predicted user count and the distance to the library to a score
         normalized_time = time_to_library / max_time
 
@@ -117,7 +125,7 @@ def predict(input_data: List[LibraryScorePredictionInput]):
 
         # 3. Return the libraries sorted by the score
         score = (weight_time * (1 - normalized_time)) + (
-            weight_user_percentage * (1 - prediction_user_percentage)
+            weight_user_percentage * (1 - pred['predicted_user_count'])
         )
         predictions = []
 
@@ -126,7 +134,7 @@ def predict(input_data: List[LibraryScorePredictionInput]):
             score=score,
             stats={
                 "time_to_library": time_to_library,
-                "predicted_user_percentage": prediction_user_percentage,
+                "predicted_user_percentage": pred['predicted_user_count'],
             },
         )
         predictions.append(prediction)

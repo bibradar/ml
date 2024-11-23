@@ -7,6 +7,9 @@ from gluonts.model.predictor import Predictor
 import datetime
 import torch
 
+TIMEZONE = datetime.datetime.now().astimezone().tzinfo
+
+models = {}
 
 def get_data_frame(library_id: int) -> pd.DataFrame:
     db = DatabaseConnection()
@@ -43,9 +46,11 @@ def predict_one_day(model, df, start_timestamp) -> list:
     prediction_length = 96  
     freq = "15min" 
 
+    timestamp = datetime.datetime.fromtimestamp(start_timestamp, TIMEZONE).isoformat()
+
     # Prepare the input data for prediction
     input_data = ListDataset(
-        [{"target": df['user_count'].values, "start": pd.Period(start_timestamp, freq=freq)}],
+        [{"target": df['user_count'].values, "start": pd.Period(timestamp, freq=freq)}],
         freq=freq
     )
 
@@ -55,19 +60,22 @@ def predict_one_day(model, df, start_timestamp) -> list:
     predicted_values = forecast_entry.mean[:prediction_length]  
 
     # Generate timestamps for the predicted values
-    timestamps = pd.date_range(start=start_timestamp, periods=prediction_length, freq=freq)
+    timestamps = pd.date_range(start=timestamp, periods=prediction_length, freq=freq)
 
     # Combine timestamps and predicted values into a list of dictionaries
     predictions_with_timestamps = [{"timestamp": timestamp, "predicted_user_count": value} for timestamp, value in zip(timestamps, predicted_values)]
 
     return predictions_with_timestamps
 
-def load_model_and_get_prediction(timestamp: str, library_id: int) -> float:
-    data = get_data_frame(library_id)
-    pred = Predictor.deserialize(Path(f"./models/{library_id}"))
-    predictions = predict_one_day(pred, data, timestamp)
-    for prediction in predictions:
-        print(prediction)
-        if prediction['timestamp'] == pd.Timestamp(timestamp):
-            return prediction['predicted_user_count']
+def get_model(library_id: int):
+    if not library_id in models:
+        models[library_id] = Predictor.deserialize(Path(f"./models/{library_id}"), device="cpu")
 
+    return models[library_id]
+
+def load_model_and_get_prediction(start_timestamp: int, library_id: int):
+    model = get_model(library_id)
+    data = get_data_frame(library_id)    
+    predictions = predict_one_day(model, data, start_timestamp)
+
+    return predictions
