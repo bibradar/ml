@@ -24,6 +24,7 @@ lightning = "^2.4.0"
 psycopg-binary = "^3.2.3"
 fastapi = "^0.115.5"
 uvicorn = "^0.32.1"
+pydantic = "^2.10.1"
 
 
 [build-system]
