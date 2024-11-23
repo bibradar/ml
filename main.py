@@ -88,8 +88,6 @@ def get_user_count_stats_of_day(day: int):
 def predict(input_data: List[LibraryScorePredictionInput]):
     print(input_data)
 
-    # time_format = "%Y-%m-%d %H:%M:%S"
-
     predictions = []
     max_time = 0
     for library in input_data:
@@ -98,14 +96,14 @@ def predict(input_data: List[LibraryScorePredictionInput]):
             max_time = time_to_library
 
     for library in input_data:
-        timestamp_now = datetime.datetime.now().timestamp()
         # 0. Time to get to library (arrival_time - now)
-        time_to_library = timestamp_now - int(time.time())
+        time_to_library = library.arrival_time - int(time.time())
 
         # 1. Get the predicted user count for the library at the given arrival time
         data = get_data_frame(library.library_id)
-        # model = ...
         # prediction_user_precentage = model.predict(data, time_to_library)
+        prediction_user_percentage = load_model_and_get_prediction(data, library.arrival_time)
+
         prediction_user_percentage = 0.5  # value how many users  are predicted to be in the library at the given time
 
         # 2. Weight the predicted user count and the distance to the library to a score
@@ -129,7 +127,6 @@ def predict(input_data: List[LibraryScorePredictionInput]):
             },
         )
         predictions.append(prediction)
-
     return predictions
 
 
