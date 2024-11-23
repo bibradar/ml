@@ -57,14 +57,11 @@ def get_libraries_day_prediction():
     
     libraries = db.get_libraries()
     current_day_timestamp = datetime.datetime.now().replace(hour=0, minute=0, second=0).strftime("%Y-%m-%d %H:%M:%S")
-    
-    for lib in libraries:
-        prediction = load_model_and_get_prediction(current_day_timestamp, lib.id)
-    
+        
     predictions = [
         LibraryOccupancyPredictionOutput(
             library_id=library.id,
-            occupancy=str(prediction)
+            occupancy=str(load_model_and_get_prediction(current_day_timestamp, library.id))
         ) for library in libraries
     ]
     return predictions
