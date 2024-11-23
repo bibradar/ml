@@ -7,15 +7,16 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 import time
 import uvicorn
+import datetime
 
 load_dotenv(dotenv_path=".env")
 
 db = DatabaseConnection()
-app = FastAPI()
+app = FastAPI(docs_url="/documentation")
 
 class LibraryScorePredictionInput(BaseModel):
     library_id: int
-    arrival_time: int
+    arrival_time: str
 
 class LibraryScorePredictionOutput(BaseModel):
     library_id: int
@@ -49,10 +50,6 @@ def get_libraries_day_prediction():
     ]
     return predictions
 
-@app.post("/predict", response_model=List[LibraryScorePredictionOutput])
-def predict(input_data: List[LibraryScorePredictionInput]):
-    print(input_data)
-
 
 @app.get("/user_count_stats/{day}")
 def get_user_count_stats_of_day(day: int):
@@ -81,9 +78,20 @@ def get_user_count_stats_of_day(day: int):
 def predict(input_data: List[LibraryScorePredictionInput]):
     print(input_data)
 
+    time_format = "%Y-%m-%d %H:%M:%S"
+
+    predictions = []
+    max_time = 0
     for library in input_data:
+        timestamp = int(datetime.strptime(library.arrival_time, time_format).timestamp())
+        time_to_library = timestamp - int(time.time())
+        if time_to_library > max_time:
+            max_time = time_to_library
+
+    for library in input_data:
+        timestamp = int(datetime.strptime(library.arrival_time, time_format).timestamp())
         # 0. Time to get to library (arrival_time - now)
-        time_to_library = library.arrival_time - int(time.time())
+        time_to_library = timestamp - int(time.time())
 
         # 1. Get the predicted user count for the library at the given arrival time
         data = get_data_frame(library.library_id)
@@ -92,7 +100,6 @@ def predict(input_data: List[LibraryScorePredictionInput]):
         prediction_user_percentage = 0.5  # value how many users  are predicted to be in the library at the given time
 
         # 2. Weight the predicted user count and the distance to the library to a score
-        max_time = 3600  # Get max time from data??
         normalized_time = time_to_library / max_time
 
         weight_time = 0.5
@@ -102,6 +109,7 @@ def predict(input_data: List[LibraryScorePredictionInput]):
         score = (weight_time * (1 - normalized_time)) + (
             weight_user_percentage * (1 - prediction_user_percentage)
         )
+        predictions = []
 
         prediction = LibraryScorePredictionOutput(
             library_id=library.library_id,
@@ -112,8 +120,6 @@ def predict(input_data: List[LibraryScorePredictionInput]):
             },
         )
         predictions.append(prediction)
-
-    predictions = []
 
     return predictions
 
