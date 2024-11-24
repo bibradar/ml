@@ -169,10 +169,10 @@ def predict(input_data: List[LibraryScorePredictionInput]):
         # 0. Time to get to library (arrival_time - now)
         time_to_library = library.arrival_time - int(datetime.datetime.now().timestamp())
         
-        predictions = load_model_and_get_prediction(library.arrival_time, library.library_id)
+        models_predictions = load_model_and_get_prediction(library.arrival_time, library.library_id)
 
         timestamp = pd.Timestamp(library.arrival_time, unit='s', tz='Europe/Berlin')
-        pred = next(filter(lambda p: p['timestamp'] == timestamp, predictions), None)
+        pred = next(filter(lambda p: p['timestamp'] == timestamp, models_predictions), None)
         if pred == None:
             raise HTTPException(status_code=400, detail="No prediction available for this timestamp")
     
@@ -189,7 +189,6 @@ def predict(input_data: List[LibraryScorePredictionInput]):
         score = (weight_time * (1 - normalized_time)) + (
             weight_user_percentage * (1 - relative_count)
         )
-        predictions = []
 
         prediction = LibraryScorePredictionOutput(
             library_id=library.library_id,
