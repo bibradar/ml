@@ -30,7 +30,6 @@ def get_max_user_count(library_id: int) -> int:
     return max_count
 
 
-
 def predict_one_day(model, df, start_timestamp) -> list:
     """
     Predicts the user count for a complete day (96 15-minute intervals) starting from the given timestamp.

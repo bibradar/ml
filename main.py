@@ -116,6 +116,7 @@ def predict(input_data: List[LibraryScorePredictionInput]):
         timestamp = pd.Timestamp(library.arrival_time, unit='s', tz='Europe/Berlin')
         pred = next(filter(lambda p: p['timestamp'] == timestamp, predictions), None)
         if pred == None:
+            raise HTTPException(status_code=400, detail="No prediction available for this timestamp")
     
         # 2. Weight the predicted user count and the distance to the library to a score
         normalized_time = time_to_library / max_time
