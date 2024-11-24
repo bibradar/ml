@@ -90,7 +90,6 @@ class DatabaseConnection:
             (library_id,),
         )
         utilizations = cursor.fetchall()
-        print(utilizations)
         cursor.close()
         return [AggregateUtilization(*utilization) for utilization in utilizations]
     
