@@ -183,8 +183,8 @@ def predict(input_data: List[LibraryScorePredictionInput]):
         max_user_count = get_max_user_count(library.library_id)
         relative_count = pred['predicted_user_count'] / max_user_count
 
-        weight_time = 0.5
-        weight_user_percentage = 0.5
+        weight_time = 0.7
+        weight_user_percentage = 0.3
 
         # 3. Return the libraries sorted by the score
         score = (weight_time * (1 - normalized_time)) + (
