@@ -1,7 +1,7 @@
 from dotenv import load_dotenv, dotenv_values
 
 from data.db import DatabaseConnection
-from data.get_data import get_data_frame, get_model, get_max_user_count, predict_one_day, load_model_and_get_prediction
+from data.get_data import get_data_frame, get_model, get_max_user_count, predict_one_day, load_model_and_get_prediction, get_count_from_last_week
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any
@@ -44,8 +44,8 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get("/max_count")
-def read_max():
-    return get_max_user_count(1)    
+def read_max(library_id: int):
+    return get_max_user_count(library_id)    
 
 
 @app.get("/libraries")
@@ -91,6 +91,50 @@ def get_user_count_stats_of_day(day: int):
         )
 
     return stats_by_lib
+
+@app.get("/predictt", response_model=List[LibraryScorePredictionOutput])
+def predict(input_data: List[LibraryScorePredictionInput]):
+    
+    predictions = []
+    max_time = 0
+    for library in input_data:
+        time_to_library = library.arrival_time - int(datetime.datetime.now().timestamp())
+
+        if time_to_library < 0:
+            raise HTTPException(status_code=400, detail="arrival_time is in the past")
+        if time_to_library > max_time:
+            max_time = time_to_library
+
+
+    for library in input_data:
+        time_to_library = library.arrival_time - int(datetime.datetime.now().timestamp())
+        
+        count = get_count_from_last_week(library.arrival_time, library.library_id)
+        # 2. Weight the predicted user count and the distance to the library to a score
+        normalized_time = time_to_library / max_time
+
+        weight_time = 0.5
+        weight_user_percentage = 0.5
+
+        # 3. Return the libraries sorted by the score
+        score = (weight_time * (1 - normalized_time)) + (
+            weight_user_percentage * (1 - count)
+        )
+        predictions = []
+
+        prediction = LibraryScorePredictionOutput(
+            library_id=library.library_id,
+            score=score,
+            stats={
+                "time_to_library": time_to_library,
+                "predicted_user_percentage": count,
+            },
+        )
+        
+        predictions.append(prediction)
+        
+    return predictions
+    
 
 
 @app.post("/predict", response_model=List[LibraryScorePredictionOutput])
