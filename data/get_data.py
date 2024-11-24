@@ -78,3 +78,17 @@ def load_model_and_get_prediction(start_timestamp: int, library_id: int):
     predictions = predict_one_day(model, data, start_timestamp)
 
     return predictions
+
+
+def get_count_from_last_week(start_timestamp: int, library_id: int):
+    db = DatabaseConnection()
+    start_timestamp = start_timestamp - (7 * 24 * 60 * 60)  # Subtract 7 days
+
+    dt = datetime.datetime.fromtimestamp(start_timestamp, TIMEZONE)
+    dt = dt + datetime.timedelta(minutes=(15 - dt.minute % 15), seconds=-dt.second)  
+    
+    start_timestamp = int(dt.timestamp())
+    
+    util = db.get_user_count_with_timestamp(library_id, start_timestamp)
+    db.close()
+    return util[0]
