@@ -120,8 +120,32 @@ class DatabaseConnection:
         stats = cursor.fetchall()
         cursor.close()
         return stats
+
+    def get_one_day(self, library_id: int, timestamp: int):
+        cursor = self.connection.cursor()
+        cursor.execute(
+            """
+                SELECT 
+                    SUM(U.user_count)  
+                FROM 
+                    Utilization U
+                JOIN 
+                    AccessPoint A ON U.accesspoint_id = A.id
+                WHERE 
+                    A.library_id = %s
+                    AND U.timestamp >= to_timestamp(%s)
+                    AND U.timestamp < to_timestamp(%s) + INTERVAL '24 HOURS'
+                GROUP BY U.timestamp
+                ORDER BY U.timestamp;
+            """,
+            (library_id, timestamp, timestamp),
+        )
+        stats = cursor.fetchall()
+        cursor.close()
+        return stats
+        
     
-    def get_user_count_with_timestamp(self, library_id, timestamp: int):
+    def get_user_count_with_timestamp(self, library_id: int, timestamp: int):
         cursor = self.connection.cursor()
         cursor.execute(
             """
