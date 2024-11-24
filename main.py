@@ -119,16 +119,18 @@ def predict(input_data: List[LibraryScorePredictionInput]):
         time_to_library = library.arrival_time - int(datetime.datetime.now().timestamp())
         
         count = get_count_from_last_week(library.arrival_time, library.library_id)
-        print(count)
+        max_count = get_max_user_count(library.library_id)
+        
         # 2. Weight the predicted user count and the distance to the library to a score
         normalized_time = time_to_library / max_time
+        relative_count = count / max_count
 
-        weight_time = 0.5
-        weight_user_percentage = 0.5
+        weight_time = 0.7
+        weight_user_percentage = 0.3
 
         # 3. Return the libraries sorted by the score
         score = (weight_time * (1 - normalized_time)) + (
-            weight_user_percentage * (1 - count)
+            weight_user_percentage * (1 - relative_count)
         )
         predictions = []
 
