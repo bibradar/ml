@@ -119,11 +119,17 @@ def predict(input_data: List[LibraryScorePredictionInput]):
     for library in input_data:
         time_to_library = library.arrival_time - int(datetime.datetime.now().timestamp())
 
-        # if library.library_id == 1:
-        #     predictions = load_model_and_get_prediction(library.arrival_time, library.library_id)
-
-        count = get_count_from_last_week(library.arrival_time, library.library_id)
+        count = 0
         max_count = get_max_user_count(library.library_id)
+        if library.library_id == 1:
+            model_predictions = load_model_and_get_prediction(library.arrival_time, library.library_id)
+            timestamp = pd.Timestamp(library.arrival_time, unit='s', tz='Europe/Berlin')
+            pred = next(filter(lambda p: p['timestamp'] == timestamp, model_predictions), None)
+            if pred == None:
+                raise HTTPException(status_code=400, detail="No prediction available for this timestamp")
+            count = pred['predicted_user_count']
+        else:
+            count = get_count_from_last_week(library.arrival_time, library.library_id)
         
         # 2. Weight the predicted user count and the distance to the library to a score
         normalized_time = time_to_library / max_time
