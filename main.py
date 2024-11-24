@@ -117,7 +117,10 @@ def predict(input_data: List[LibraryScorePredictionInput]):
 
     for library in input_data:
         time_to_library = library.arrival_time - int(datetime.datetime.now().timestamp())
-        
+
+        # if library.library_id == 1:
+        #     predictions = load_model_and_get_prediction(library.arrival_time, library.library_id)
+
         count = get_count_from_last_week(library.arrival_time, library.library_id)
         max_count = get_max_user_count(library.library_id)
         
@@ -132,7 +135,6 @@ def predict(input_data: List[LibraryScorePredictionInput]):
         score = (weight_time * (1 - normalized_time)) + (
             weight_user_percentage * (1 - relative_count)
         )
-        predictions = []
 
         prediction = LibraryScorePredictionOutput(
             library_id=library.library_id,
