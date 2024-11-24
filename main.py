@@ -32,6 +32,7 @@ class LibraryScorePredictionInput(BaseModel):
 class LibraryScorePredictionOutput(BaseModel):
     library_id: int
     score: float
+    stats: Dict[str, Any]
 
 class LibraryOccupancyPredictionOutput(BaseModel):
     library_id: int
