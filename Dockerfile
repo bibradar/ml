@@ -1,11 +1,3 @@
-# FROM --platform=amd64 ghcr.io/bibradar/ml_backend_base:latest
-
-# WORKDIR /app
-
-# COPY . .
-
-# CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-
 # Use the official Python image from the Docker Hub
 FROM python:3.12-slim
 
@@ -19,7 +11,7 @@ WORKDIR /app
 COPY pyproject.toml poetry.lock ./
 
 # Install the dependencies
-RUN poetry install --no-root --no-dev
+RUN poetry install --no-root --only main
 
 # Copy the application code
 COPY . .

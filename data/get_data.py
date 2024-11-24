@@ -4,10 +4,14 @@ import pandas as pd
 import pickle
 from gluonts.dataset.common import ListDataset
 from gluonts.model.predictor import Predictor
+from dotenv import load_dotenv
 import datetime
 import torch
 
 TIMEZONE = datetime.datetime.now().astimezone().tzinfo
+
+load_dotenv(dotenv_path=".env")
+db = DatabaseConnection()
 
 models = {}
 
@@ -72,9 +76,29 @@ def get_model(library_id: int):
 
     return models[library_id]
 
+def load_model_and_get_prediction2(start_timestamp: int, library_id: int):
+    last_week_timestamp = datetime.datetime.now().replace(hour=0, minute=0, second=0) - datetime.timedelta(days=14)
+
+    data = db.get_one_day(library_id, int(last_week_timestamp.timestamp()))
+
+    data = map(lambda d: {'predicted_user_count': d[0]}, data)
+
+    return list(data)
+    
+
 def load_model_and_get_prediction(start_timestamp: int, library_id: int):
     model = get_model(library_id)
-    data = get_data_frame(library_id)    
+    data = get_data_frame(library_id)  
     predictions = predict_one_day(model, data, start_timestamp)
 
     return predictions
+
+
+def get_count_from_last_week(start_timestamp: int, library_id: int):
+    db = DatabaseConnection()
+    last_week_timestamp = datetime.datetime.now().replace(hour=0, minute=0, second=0) - datetime.timedelta(days=7)
+
+    util = db.get_user_count_with_timestamp(library_id, int(last_week_timestamp.timestamp()))
+    print(util)
+    db.close()
+    return util[0]
